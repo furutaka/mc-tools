@@ -1,10 +1,8 @@
-#! /usr/bin/python
-# $Id$
-# $URL$
+#! /usr/bin/python -W all
 
-from __future__ import print_function, absolute_import
+from __future__ import print_function
 import sys, argparse
-from .ssw import SSW
+from mctools.mcnp.ssw import SSW
 
 def main():
     """

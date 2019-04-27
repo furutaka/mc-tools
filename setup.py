@@ -20,7 +20,7 @@ except ImportError:
         sys.exit(1)
 
 setup(
-    name = "mctools",
+    name = "mc-tools",
     version = os.popen("git describe --tags --long").read().strip(),
     author = "Konstantin Batkov",
     author_email = "batkov@gmail.com",
@@ -41,14 +41,22 @@ setup(
                    "mctools/mcnp/configure.ac", "mctools/mcnp/Doxyfile",
                    "mctools/mcnp/Makefile.am",  "mctools/mcnp/mctal2root.ctl",
                    "mctools/mcnp/NEWS",         "mctools/mcnp/README",
-                   "mctools/mcnp/reference_guide.pdf" ]),
+                   "mctools/mcnp/reference_guide.pdf" ]
+        ),
         ("mctools/mcnp/examples",
-         [ "mctools/mcnp/examples/ssw2root/example.C" ]),
+         [ "mctools/mcnp/examples/ssw2root/example.C" ]
+        ),
         # PHITS
         ("mctools/phits/examples",
-         [ "mctools/phits/examples/loadlevel-single.job" ]),
+         [ "mctools/phits/examples/loadlevel-single.job" ]
+        ),
         ("mctools/phits/elisp",
-         [ "mctools/phits/phits-mode.el" ])
+         [ "mctools/phits/phits-mode.el" ]
+        ),
+        # FLUKA
+        ("mctools/fluka/elisp",
+         ["mctools/fluka/fluka-mode.el"]
+        )
     ],
     entry_points = {
         "console_scripts" : [

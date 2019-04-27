@@ -7,10 +7,10 @@
 #  Usage: angel2root.py file.dat
 #
 
-from __future__ import print_function, absolute_import
+from __future__ import print_function
 import sys, re, argparse
 from array import array
-from .phits import TallyOutputParser
+from mctools.phits.phits import TallyOutputParser
 import ROOT
 # The line below is needed to prevent command-line arguments from
 # stolen by PyROOT and handed to TApplication

@@ -1,11 +1,11 @@
 #! /usr/bin/python -W all
-from __future__ import print_function, absolute_import
+from __future__ import print_function
 import time
 import subprocess
 import tempfile
 import os,sys,math
 import numpy as np
-from .testsuite import FormatStrings
+from mctools.mcnp.testsuite import FormatStrings
 import ROOT
 
 #############################################################################################################################

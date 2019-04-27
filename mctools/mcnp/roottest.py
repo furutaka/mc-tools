@@ -1,8 +1,8 @@
 #! /usr/bin/python -W all
-from __future__ import print_function, absolute_import
+from __future__ import print_function
 import sys, argparse
-from .mctal import MCTAL
-from .roottestsuite import RootTest
+from mctools.mcnp.mctal import MCTAL
+from mctools.mcnp.roottestsuite import RootTest
 
 def main():
 	"""

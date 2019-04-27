@@ -4,9 +4,9 @@
 #
 #
 
-from __future__ import print_function, absolute_import
+from __future__ import print_function
 import re, sys
-from .phits import mcnp_phits_particles as particle
+from mctools.phits.phits import mcnp_phits_particles as particle
 
 def getCells(fname):
     """

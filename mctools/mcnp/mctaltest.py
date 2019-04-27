@@ -1,8 +1,7 @@
 #! /usr/bin/python -W all
-from __future__ import absolute_import
 import sys, argparse
-from .mctal import MCTAL
-from .testsuite import TestSuite
+from mctools.mcnp.mctal import MCTAL
+from mctools.mcnp.testsuite import TestSuite
 
 def main():
 	"""

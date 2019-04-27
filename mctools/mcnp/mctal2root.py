@@ -3,14 +3,14 @@
 # https://github.com/kbat/mc-tools
 #
 
-from __future__ import print_function, absolute_import
+from __future__ import print_function
 import sys, argparse
 from os import path
-from .mctal import MCTAL
+from mctools.mcnp.mctal import MCTAL
 import numpy as np
 import ROOT
 ROOT.PyConfig.IgnoreCommandLineOptions = True
-sys.path.insert(1, '@pythondir@')
+sys.path.insert(1, '@python2dir@')
 
 def main():
 	"""
