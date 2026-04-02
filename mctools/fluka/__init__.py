@@ -151,4 +151,4 @@ def line(card,w1="",w2="",w3="",w4="",w5="",w6="",sdum="", f=sys.stdout):
         w6 = ""
     if sdum == "-":
         sdum = ""
-    print(f"{card:10}{trim_scientific(w1):>10}{trim_scientific(w2):>10}{trim_scientific(w3):>10}{trim_scientific(w4):>10}{trim_scientific(w5):>10}{trim_scientific(w6):>10}{sdum:8}", file=f)
+    print(f"{card:10}{trim_scientific(w1):>10}{trim_scientific(w2):>10}{trim_scientific(w3):>10}{trim_scientific(w4):>10}{trim_scientific(w5):>10}{trim_scientific(w6):>10}{sdum:8}".rstrip(), file=f)
