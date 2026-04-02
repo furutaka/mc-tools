@@ -33,12 +33,12 @@ def getAxesTitle(det):
     ztitle = "1/cm^{2}/GeV/sr"
     if int(det.dist) in (208,211): # differential energy fluence/current
         ztitle = "GeV/cm^{2}/GeV/sr"   # FLUKA manual page 247
-    return ";Energy [GeV];#Omega [rad];" + ztitle
+    return ";Energy [GeV];#Omega [sr];" + ztitle
     # return {
-    #     -2 : ";log10(Energy/GeV);log10(#Omega/rad);" + ztitle,
-    #     -1 : ";log10(Energy/GeV);#Omega [rad];" + ztitle,
-    #      1 : ";Energy [GeV];#Omega [rad];" + ztitle,
-    #      2 : ";Energy [GeV];log10(#Omega/rad);" + ztitle,
+    #     -2 : ";log10(Energy/GeV);log10(#Omega/sr);" + ztitle,
+    #     -1 : ";log10(Energy/GeV);#Omega [sr];" + ztitle,
+    #      1 : ";Energy [GeV];#Omega [sr];" + ztitle,
+    #      2 : ";Energy [GeV];log10(#Omega/sr);" + ztitle,
     #     }[x]
 
 def getNEbins(det):
