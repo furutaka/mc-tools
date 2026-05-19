@@ -17,7 +17,7 @@ def main():
     parser.add_argument('plotgeom', type=str, nargs='*', help='list of plotgeom files')
     parser.add_argument('-o', dest='root', type=str, help='output ROOT file name', default="")
     parser.add_argument('-v', '--verbose', action='store_true', default=False, dest='verbose', help='print what is being done')
-    parser.add_argument('-p', '--plane', dest='plane', type=str, help='Plane type', default="guess")
+    parser.add_argument('-p', '--plane', dest='plane', type=str, help='Plane type: xy, xz, yz, arbitrary, or guess (default)', default="guess")
     parser.add_argument('-f', '--force', action='store_true', default=False, dest='overwrite', help='overwrite the output ROOT file')
 
 
@@ -61,17 +61,21 @@ def main():
                 print("horizontal/vertical axes length:",XAXLEN,YAXLEN)
 #                print(X0,Y0,Z0,X1,Y1,Z1,TYX,TYY,TYZ,TXX,TXY,TXZ,XAXLEN,YAXLEN)
 
-            print(X0, X1, Y0, Y1)
-            if args.plane in ("xy", "yx", "xz", "zx", "zy", "yz"):
-                plane=args.plane
+            tol = 1e-3
+            if args.plane in ("xy", "yx", "xz", "zx", "yz", "zy", "arbitrary"):
+                plane = args.plane
             else:
-                plane = "unknown"
-                if abs(X0-X1)<0.001:
-                    plane="zx"
-                elif abs(Y0-Y1)<0.001:
-                    plane="xz"
-                elif abs(Z0-Z1)<0.001:
-                    plane="xy"
+                # Determine plane type from direction cosines of the picture axes.
+                # The picture x-axis is (TXX,TXY,TXZ) and y-axis is (TYX,TYY,TYZ).
+                # If both axes have no Z component the picture lies in the XY plane, etc.
+                if abs(TXZ) < tol and abs(TYZ) < tol:
+                    plane = "xy"
+                elif abs(TXY) < tol and abs(TYY) < tol:
+                    plane = "xz"
+                elif abs(TXX) < tol and abs(TYX) < tol:
+                    plane = "yz"
+                else:
+                    plane = "arbitrary"
 
             if args.verbose:
                 print(f"Plane == {plane}")
@@ -115,34 +119,25 @@ def main():
                     # if args.verbose:
                     #     print("size24:",tmp)
                 else:
-                    # if args.verbose:
-                    #     print("a",wlength)
                     coord = struct.unpack("=%df" % (wlength*2),data) # pairs of x,y
-                    # if args.verbose:
-                    #     print(coord[:10])
 
-#                    print ("PLANE[{}] == {} {} {} \n".format(plane,X0,Y0,Z0))
-                    if plane=="xy":
-                        y = list(map(lambda x:x+X0, coord[1::2]))
-                        x = list(map(lambda y:y+Y0, coord[::2]))
-                    elif plane=="zx":
-                        y = list(map(lambda x:x+Z0, coord[::2]))
-                        x = list(map(lambda y:y+X0, coord[1::2]))
-                    elif plane=="zy":
-                        x = list(map(lambda x:x+Y0, coord[::2]))
-                        y = list(map(lambda y:y+Z0, coord[1::2]))
+                    # Worm coordinates are in the picture's local frame.
+                    # Convert to real 3D coordinates using direction cosines:
+                    #   real = origin + x_local*(TXX,TXY,TXZ) + y_local*(TYX,TYY,TYZ)
+                    x_local = coord[::2]
+                    y_local = coord[1::2]
+                    x3d = [X0 + xi*TXX + yi*TYX for xi, yi in zip(x_local, y_local)]
+                    y3d = [Y0 + xi*TXY + yi*TYY for xi, yi in zip(x_local, y_local)]
+                    z3d = [Z0 + xi*TXZ + yi*TYZ for xi, yi in zip(x_local, y_local)]
 
-                    elif plane=="yx":
-                        y = list(map(lambda x:x+Y0, coord[::2]))
-                        x = list(map(lambda y:y+X0, coord[1::2]))
-                    elif plane=="xz":
-                        x = list(map(lambda x:x+Z0, coord[::2]))
-                        y = list(map(lambda y:y+Z0, coord[1::2]))
-                    elif plane=="yz":
-                        x = list(map(lambda x:x+Y0, coord[::2]))
-                        y = list(map(lambda y:y+Z0, coord[1::2]))
-
-
+                    if plane in ("xy", "yx"):
+                        x, y = x3d, y3d
+                    elif plane in ("xz", "zx"):
+                        x, y = x3d, z3d
+                    elif plane in ("yz", "zy"):
+                        x, y = y3d, z3d
+                    elif plane == "arbitrary":
+                        x, y = list(x_local), list(y_local)
                     else:
                         print(f"ERROR: Plane is {plane} - not supported", file=sys.stderr)
                         return 1
