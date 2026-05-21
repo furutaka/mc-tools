@@ -53,6 +53,10 @@ class Zone:
                 val = self.hist.GetMaximum()
                 b = self.hist.GetMaximumBin()
                 err = self.hist.GetBinError(b)
+
+                for axis in (self.hist.GetXaxis(), self.hist.GetYaxis(), self.hist.GetZaxis()):
+                    axis.SetRange()
+
                 # if val < 1e-6:
                 #         print(self.full_name, val, file=sys.stderr)
                 return Value(val, err, b)
