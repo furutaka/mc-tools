@@ -1,5 +1,6 @@
 from functools import lru_cache
 import ctypes
+import sys
 import ROOT
 ROOT.PyConfig.IgnoreCommandLineOptions = True
 
@@ -274,6 +275,11 @@ class Configuration:
                         h.SetDirectory(0)
                         self._hists[hname] = h
                 return self._hists[hname]
+
+        def addRegion(self, name, title):
+                r = Region(name, title, getHist=self.getHist)
+                self.regions.append(r)
+                return r
 
         def getRegion(self, name):
                 """ Return region by its name """
