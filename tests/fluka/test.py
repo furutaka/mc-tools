@@ -4,7 +4,7 @@
 #
 
 import re, sys
-from mctools.fluka.usrbintxt2root import convert as usrbintxt2root
+from mctools.fluka.usbrea2root import convert as usbrea2root
 import ROOT
 ROOT.PyConfig.IgnoreCommandLineOptions = True
 
@@ -241,7 +241,7 @@ def usrbin(rootfname, hname, tabfname):
     print("usrbin:\t", end="", flush=True)
 
     tmp_root = tabfname + '.root'
-    usrbintxt2root(tabfname, tmp_root, verbose=False)
+    usbrea2root(tabfname, tmp_root, verbose=False)
 
     rootf = ROOT.TFile(rootfname)
     h_ref = rootf.Get(hname)

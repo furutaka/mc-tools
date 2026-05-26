@@ -48,7 +48,7 @@ def convert(infile, outfile, verbose):
             err_start = i + 2
 
     if data_start is None or err_start is None:
-        print(f"usrbintxt2root: could not locate data sections in {infile}", file=sys.stderr)
+        print(f"usbrea2root: could not locate data sections in {infile}", file=sys.stderr)
         return 1
 
     values = read_values(lines, data_start, n)
@@ -76,12 +76,13 @@ def convert(infile, outfile, verbose):
     f = ROOT.TFile(outfile, "recreate")
     h.Write()
     f.Close()
-    print(f"Written: {outfile}")
+    if verbose:
+        print(f"Written: {outfile}")
     return 0
 
 
 def main():
-    """Convert FLUKA USRBIN ASCII text output to a ROOT TH3F histogram."""
+    """Convert usbrea text output (USRBIN estimator) to a ROOT TH3F histogram."""
 
     parser = argparse.ArgumentParser(description=main.__doc__,
                                      epilog="Homepage: https://github.com/kbat/mc-tools")
@@ -93,7 +94,7 @@ def main():
     args = parser.parse_args()
 
     if not path.isfile(args.txt):
-        print(f"usrbintxt2root: File {args.txt} does not exist.", file=sys.stderr)
+        print(f"usbrea2root: File {args.txt} does not exist.", file=sys.stderr)
         return 1
 
     outfile = args.root if args.root else args.txt.replace('.txt', '.root')
