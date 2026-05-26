@@ -91,13 +91,14 @@ class Area:
 
         0m, 1m, Bulk, Duct, Max
         """
-        def __init__(self, name, title, hist, region):
+        def __init__(self, name, title, hist, region, getHist=None):
                 self.name = name
                 self.title = title
                 self.hist = hist
                 self.zones = []
                 self.isVirtual = False # if true then just a collection of already existing zones for max calculation
                 self.region = region # containing region
+                self._getHist = getHist
 
         def checkZoneName(self, name):
                 if name in [z.name for z in self.zones]:
@@ -106,6 +107,13 @@ class Area:
 
         def addZone(self, name, title, xmin=None, xmax=None, ymin=None, ymax=None, zmin=None, zmax=None, hist=None):
                 self.checkZoneName(name)
+                if isinstance(hist, str):
+                        if self._getHist is None:
+                                raise RuntimeError(
+                                        f"addZone '{name}': hist={hist!r} is a string but no getHist "
+                                        f"callable was provided to Region/Area"
+                                )
+                        hist = self._getHist(hist)
                 z = Zone(name, title, hist if hist is not None else self.hist, self,
                          xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax, zmin=zmin, zmax=zmax)
                 self.zones.append(z)
@@ -173,11 +181,12 @@ class Region:
 
         Inside, Klystron, AccessSide, Access, Roof, Outside, Max
         """
-        def __init__(self, name, title, hist):
+        def __init__(self, name, title, hist, getHist=None):
                 self.name = name
                 self.title = title
                 self.hist = hist
                 self.area = {}
+                self._getHist = getHist
 
         def checkAreaName(self, name):
                 if name in [n for n in self.area.keys()]:
@@ -186,7 +195,7 @@ class Region:
 
         def addArea(self, name):
                 self.checkAreaName(name)
-                self.area[name] = Area(name, "", self.hist, self)
+                self.area[name] = Area(name, "", self.hist, self, getHist=self._getHist)
 
         def getArea(self, name):
                 return self.area[name]
