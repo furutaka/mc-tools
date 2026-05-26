@@ -11,10 +11,13 @@ run: rantest004
 test.root:
 	fluka2root -f -keep test.inp
 
+test.53.txt:
+	(echo test.53.usrbin; echo -n ""; echo test.53.txt)| $(FLUPRO)/flutil/usbrea
+
 test.54.txt:
 	(echo test.54.usrbin; echo -n ""; echo test.54.txt)| $(FLUPRO)/flutil/usbrea
 
-usrbin: test.54.txt
+usrbin: test.53.txt test.54.txt
 
 convert: run test.root usrbin
 

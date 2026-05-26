@@ -383,6 +383,7 @@ def main():
     usrtrack(rootfname, "h52D", "test.52_tab.lis")
     usrbdx(rootfname, "pFluenUD", "test.47_tab.lis") # lowneu
     usrbin(rootfname, "Edeposit", "test.54.txt")
+    usrbin(rootfname, "piFluBin", "test.53.txt")
     resnuclei(rootfname, "resnuc", "test.55_tab.lis")
 
 
