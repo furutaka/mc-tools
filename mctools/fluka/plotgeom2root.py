@@ -2,7 +2,7 @@
 
 import sys, argparse, os, struct
 from array import array
-from mctools.fluka.flair import fortran
+from mctools.fluka.flukaio.recordio import read_record
 import ROOT
 ROOT.PyConfig.IgnoreCommandLineOptions = True
 ROOT.gROOT.SetBatch(True)
@@ -37,7 +37,7 @@ def main():
         sys.exit("%s exists. Use '-f' to overwrite it." % rootFileName)
 
     with open(args.plotgeom, 'rb') as f:
-        data = fortran.read(f)
+        data = read_record(f)
         size = len(data)
         if size != 80:
             sys.exit("Format error [title]")
@@ -48,7 +48,7 @@ def main():
         if args.verbose:
             print("Title:",title)
 
-        data = fortran.read(f)
+        data = read_record(f)
         size = len(data)
         if size != 14*4:
             print("Format error [basis]")
@@ -88,7 +88,7 @@ def main():
             xtitle = f"({TXX:.3g}, {TXY:.3g}, {TXZ:.3g}) [cm]"
             ytitle = f"({TYX:.3g}, {TYY:.3g}, {TYZ:.3g}) [cm]"
 
-        data = fortran.read(f)
+        data = read_record(f)
         size = len(data)
         if size==8:
             NWORMS,dummy = struct.unpack("=2i", data)
@@ -98,7 +98,7 @@ def main():
         mg = ROOT.TMultiGraph("mg", f"{title};{xtitle};{ytitle}")
         while True:
             i = i + 1
-            data = fortran.read(f)
+            data = read_record(f)
             if data is None:
                 break
             size = len(data)

@@ -5,7 +5,8 @@ from os import path
 import numpy as np
 from math import isclose
 from mctools import fluka, getLogBins, getLinBins
-from mctools.fluka.flair import Data, fortran
+from mctools.fluka.flukaio.readers import FlukaBinaryFile, DetectorRecord, unpack_floats
+from mctools.fluka.flukaio.recordio import read_record, skip_record
 import ROOT
 ROOT.PyConfig.IgnoreCommandLineOptions = True
 
@@ -59,27 +60,27 @@ def histN(det):
     else:
         return 0
 
-class Usrtrack(Data.Usrxxx):
+class Usrtrack(FlukaBinaryFile):
     """ Reads the ustsuw binary output
         (USRTRACK / USRCOLL estimators)
     """
-    def readHeader(self, filename):
+    def read_header(self, filename):
         """ Reads the file header info
             Based on Data.Usrbdx
         """
-        f = super().readHeader(filename)
-#        self.sayHeader()
+        f = super().read_header(filename)
+#        self.describe_header()
 
         while True:
-            data = fortran.read(f)
+            data = read_record(f)
             if data is None: break
             size = len(data)
 #            print("size: ", size)
 
             if size == 14 and data.decode('utf8')[:10] == "STATISTICS":
-                self.statpos = f.tell()
-                for det in self.detector:
-                    data = Data.unpackArray(fortran.read(f))
+                self.stats_offset = f.tell()
+                for det in self.detectors:
+                    data = unpack_floats(read_record(f))
                     det.total = data[0]
                     det.totalerror = data[1]
 #                    for j in range(6):
@@ -90,7 +91,7 @@ class Usrtrack(Data.Usrxxx):
 
             header = struct.unpack("=i10siiififfif", data)
 
-            det = Data.Detector()
+            det = DetectorRecord()
             det.nb = header[0]
             det.name = header[1].decode('utf8').strip() # titutc - track/coll name
             det.type = header[2] # itustc - type of binning: 1 - linear energy etc
@@ -103,10 +104,10 @@ class Usrtrack(Data.Usrxxx):
             det.ne = header[9] # netcbn = number of energy intervals
             det.de = header[10] # detcbn = energy bin width
 
-            self.detector.append(det)
+            self.detectors.append(det)
 
             if det.lowneu:
-                data = fortran.read(f)
+                data = read_record(f)
                 det.ngroup = struct.unpack("=i",data[:4])[0]
                 det.egroup = struct.unpack("=%df"%(det.ngroup+1), data[4:])
                 print(f"{det.name}: Low energy neutrons scored with {det.ngroup} groups")
@@ -115,13 +116,13 @@ class Usrtrack(Data.Usrxxx):
                 det.egroup = ()
 
             size  = (det.ngroup+det.ne) * 4
-            if size != fortran.skip(f):
+            if size != skip_record(f):
                 raise IOError("Invalid USRTRACK file")
         f.close()
 
-    def printHeader(self, i):
-        """ Prints the header """
-        det = self.detector[i]
+    def describe_detector(self, i):
+        """Describe one detector block."""
+        det = self.detectors[i]
         print("Detector:", det.name)
         print(" binning type: ", det.type)
         print(" distribution to be scored:", det.dist)
@@ -130,28 +131,28 @@ class Usrtrack(Data.Usrxxx):
         print(" low energy neutrons:", det.lowneu)
         print(" %g < E < %g GeV / %d bins; bin width: %g" % (det.elow, det.ehigh, det.ne, det.de))
 
-    def readStat(self, det,lowneu):
+    def read_statistics(self, det, lowneu):
         """ Read detector # det statistical data """
-        if self.statpos < 0: return None
-        with open(self.file,"rb") as f:
-            f.seek(self.statpos)
+        if self.stats_offset < 0: return None
+        with open(self.filename,"rb") as f:
+            f.seek(self.stats_offset)
             for i in range(det+3): # check that 3 gives correct errors with 1 USRTRACK detector
-                fortran.skip(f) # skip previous detectors
-            data = fortran.read(f)
+                skip_record(f) # skip previous detectors
+            data = read_record(f)
         return data
 
-    def readData(self, det,lowneu):
+    def read_detector_data(self, det, lowneu):
         """Read detector det data structure
 
         """
-        f = open(self.file,"rb")
-        fortran.skip(f) # Skip header
+        f = open(self.filename,"rb")
+        skip_record(f) # Skip header
         for i in range(2*det):
-            fortran.skip(f)     # Detector Header & Data
-        fortran.skip(f)         # Detector Header
+            skip_record(f)     # Detector Header & Data
+        skip_record(f)         # Detector Header
         if lowneu:
-            fortran.skip(f) # skip low enery neutron data
-        data = fortran.read(f)
+            skip_record(f) # skip low enery neutron data
+        data = read_record(f)
         f.close()
         return data
 
@@ -176,22 +177,22 @@ def main():
         rootFileName = args.root
 
     b = Usrtrack()
-    b.readHeader(args.usrtrack)
+    b.read_header(args.usrtrack)
 
-    ND = len(b.detector)
+    ND = len(b.detectors)
     # print("ND:",ND)
 
     if args.verbose:
-        #b.sayHeader()
+        #b.describe_header()
         for i in range(ND):
-            b.printHeader(i)
+            b.describe_detector(i)
             print("")
 
     fout = ROOT.TFile(rootFileName, "recreate")
     for i in range(ND):
-        det = b.detector[i]
-        val = Data.unpackArray(b.readData(i, det.lowneu))
-        err = Data.unpackArray(b.readStat(i, det.lowneu))
+        det = b.detectors[i]
+        val = unpack_floats(b.read_detector_data(i, det.lowneu))
+        err = unpack_floats(b.read_statistics(i, det.lowneu))
 
         # print("val",val, len(err))
         # print("err",err, len(err))

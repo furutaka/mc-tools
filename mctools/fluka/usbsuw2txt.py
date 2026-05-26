@@ -4,7 +4,7 @@ import sys, argparse
 from os import path
 import numpy as np
 from mctools import fluka
-from mctools.fluka.flair import Data
+from mctools.fluka.flukaio.readers import UsrbinFile, unpack_floats
 
 def getEdges(xmin, xmax, nbins):
     """Return bin edges given the axis min, max and number of equidistant bins
@@ -44,23 +44,23 @@ def main():
         print("usbsuw2txt: File %s already exists. Use '-f' to overwrite." % outFileName, file=sys.stderr)
         return 1
 
-    b = Data.Usrbin()
-    b.readHeader(args.usbsuw)
+    b = UsrbinFile()
+    b.read_header(args.usbsuw)
 
-    ND = len(b.detector)
+    ND = len(b.detectors)
 
     if args.verbose:
-        b.sayHeader()
+        b.describe_header()
         print("\n%d tallies found:" % ND)
         for i in range(ND):
-            b.say(i)
+            b.describe_detector(i)
             print("")
 
     with open(outFileName, "w") as fout:
         for i in range(ND):
-            val = Data.unpackArray(b.readData(i))
-            err = Data.unpackArray(b.readStat(i))
-            det = b.detector[i]
+            val = unpack_floats(b.read_detector_data(i))
+            err = unpack_floats(b.read_statistics(i))
+            det = b.detectors[i]
 
             title = fluka.particle.get(det.score, "unknown")
             axes = ""

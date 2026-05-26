@@ -2,7 +2,7 @@
 
 import sys, argparse, os, struct
 from array import array
-from mctools.fluka.flair import fortran
+from mctools.fluka.flukaio.recordio import read_record
 import ROOT
 ROOT.PyConfig.IgnoreCommandLineOptions = True
 
@@ -33,7 +33,7 @@ def main():
         with open(eventdat, 'rb') as f:
             print(eventdat)
             while True:
-                data = fortran.read(f)
+                data = read_record(f)
                 if data is None:
                     break
                 size = len(data)

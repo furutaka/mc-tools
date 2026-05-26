@@ -4,7 +4,7 @@ import sys, argparse
 from os import path
 import numpy as np
 from mctools import fluka, getLogBins, getLinBins
-from mctools.fluka.flair import Data
+from mctools.fluka.flukaio.readers import UsrbdxFile, unpack_floats
 import ROOT
 ROOT.PyConfig.IgnoreCommandLineOptions = True
 
@@ -113,23 +113,23 @@ def main():
     else:
         rootFileName = args.root
 
-    b = Data.Usrbdx()
-    b.readHeader(args.usrbdx) # data file closed here
+    b = UsrbdxFile()
+    b.read_header(args.usrbdx) # data file closed here
 
-    ND = len(b.detector)
+    ND = len(b.detectors)
 
     if args.verbose:
-        b.sayHeader()
+        b.describe_header()
         print("\n%s %d %s found:" % ('*'*20, ND, "estimator" if ND==1 else "estimators"))
         for i in range(ND):
-            b.say(i)
+            b.describe_detector(i)
             print("")
 
     fout = ROOT.TFile(rootFileName, "recreate")
     for i in range(ND):
-        val = Data.unpackArray(b.readData(i))
-        err = Data.unpackArray(b.readStat(i))
-        det = b.detector[i]
+        val = unpack_floats(b.read_detector_data(i))
+        err = unpack_floats(b.read_statistics(i))
+        det = b.detectors[i]
         lenval = len(val)
 
         assert lenval == len(err)

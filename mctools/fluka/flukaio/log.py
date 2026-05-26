@@ -27,8 +27,7 @@ def _output(txt, repeat=True):
 		print(txt)
 
 #-------------------------------------------------------------------------------
-# Print out something in the log unit
-#-------------------------------------------------------------------------------
 def say(*args):
 	"""say/print a message"""
 	_output(" ".join(map(str,args)))
+

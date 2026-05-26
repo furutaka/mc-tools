@@ -5,7 +5,8 @@ import logging
 from os import path
 import numpy as np
 from mctools import fluka, getLogBins, getLinBins
-from mctools.fluka.flair import Data, fortran
+from mctools.fluka.flukaio.readers import DetectorRecord, FlukaBinaryFile, unpack_floats
+from mctools.fluka.flukaio.recordio import read_record, skip_record
 import ROOT
 ROOT.PyConfig.IgnoreCommandLineOptions = True
 
@@ -157,15 +158,15 @@ def getVarTitle(i):
      case _:
       return (f"Unknown: {i=}", "")
 
-class USYSUW(Data.Usrxxx):
+class USYSUW(FlukaBinaryFile):
     """
     Read the usysuw binary output (USRYIELD average)
     """
     def setVerbose(self, val):
         self.verbose = val
 
-    def say(self, i):
-        det = self.detector[i]
+    def describe_detector(self, i):
+        det = self.detectors[i]
         print(f"Detector {det.NYL}:\t{det.TITUYL}")
         print(" cross section kind: ",det.ITUSYL)
         print(f" distributions: {det.IXUSYL} {fluka.particle.get(det.IDUSYL)}")
@@ -178,7 +179,7 @@ class USYSUW(Data.Usrxxx):
         print(" first variable bin width:",det.DEYLBN)
         print(f" second variable min/max: {det.AYLLOW} {det.AYLHGH} rad")
 
-    def getBins(self,det):
+    def energy_bins(self, det):
         """ Return lin or log energy bins depending on the value of i """
         ie, ia, i4 = getType(det.ITUSYL)
         if ie < 0:
@@ -186,7 +187,7 @@ class USYSUW(Data.Usrxxx):
         else:
             return getLinBins(det.NEYLBN, det.EYLLOW, det.EYLHGH)
 
-    def hist(self,det):
+    def make_histogram(self, det):
         """ Create histogram for the given detector """
         if det.NEYLBN == 0:
             logger.warning(f"Not saving detector {det.name} into ROOT file since it has 0 energy bins: {det.elow} < E < {det.ehigh}")
@@ -215,13 +216,13 @@ class USYSUW(Data.Usrxxx):
         title += ";" + getDistTitle(det.IXUSYL, var1, var2)
 
 
-        return ROOT.TH1F(det.TITUYL, title, det.NEYLBN, self.getBins(det))
+        return ROOT.TH1F(det.TITUYL, title, det.NEYLBN, self.energy_bins(det))
 
 
-    def readHeader(self, filename):
-        f = super().readHeader(filename)
+    def read_header(self, filename):
+        f = super().read_header(filename)
 
-        data = fortran.read(f)
+        data = read_record(f)
 
         if data is None:
             logger.error("Invalid usrysuw file")
@@ -236,7 +237,7 @@ class USYSUW(Data.Usrxxx):
         logger.info(f"CMS energy for Lorentz transformation: {SQSUYL} GeV")
 
         while True:
-            data = fortran.read(f)
+            data = read_record(f)
             if data is None:
                 logger.debug("data = None -> break")
                 break
@@ -245,7 +246,7 @@ class USYSUW(Data.Usrxxx):
             if size == 70: # new detector
                 logger.debug(f" Reading the header...\t{size=}")
                 header = struct.unpack("=i10s3i2i2fi2fif2f", data)
-                det = Data.Detector()
+                det = DetectorRecord()
                 det.NYL = header[0]
                 det.TITUYL = header[1].decode('utf-8').strip() # detector title (sdum)
                 det.ITUSYL = header[2] # what(1)
@@ -265,13 +266,13 @@ class USYSUW(Data.Usrxxx):
                 det.DEYLBN = header[13]
                 det.AYLLOW = header[14]
                 det.AYLHGH = header[15]
-                self.detector.append(det)
+                self.detectors.append(det)
             elif size == 14: # and data.decode('utf8')[:10] == "STATISTICS":
-                self.statpos = f.tell()
+                self.stats_offset = f.tell()
                 break
                 # logger.debug(f" Reading STATISTICS...\t{size=}")
                 # for det in self.detector:
-                #     data = Data.unpackArray(fortran.read(f))
+                #     data = unpack_floats(read_record(f))
                 #     logger.debug(f"  detector {det.NYL}")
                     # det.total = data[0]
                     # det.totalerror = data[1]
@@ -298,31 +299,31 @@ class USYSUW(Data.Usrxxx):
                 #     raise IOError("Invalid USRTRACK file")
                 # f.close()
 
-    def readStat(self, i, lowneu):# almost the same as ustsuw2root. TODO: use a common base class
+    def read_statistics(self, i, lowneu):# almost the same as ustsuw2root. TODO: use a common base class
         """ Read detector # det statistical data """
-        if self.statpos < 0:
-            logger.warning(f"Negative statpos: {self.statpos=}")
+        if self.stats_offset < 0:
+            logger.warning(f"Negative statpos: {self.stats_offset=}")
             return None
 
-        logger.debug(f"{self.statpos=}")
+        logger.debug(f"{self.stats_offset=}")
 
-        with open(self.file,"rb") as f:
-            f.seek(self.statpos)
+        with open(self.filename,"rb") as f:
+            f.seek(self.stats_offset)
             for _ in range(7*i+3):
-                fortran.skip(f) # skip previous detectors
-            data = fortran.read(f)
+                skip_record(f) # skip previous detectors
+            data = read_record(f)
 
         return data
 
-    def readData(self, i, lowneu): # almost the same as ustsuw2root. TODO: use a common base class
+    def read_detector_data(self, i, lowneu): # almost the same as ustsuw2root. TODO: use a common base class
         """Read detector det data structure
 
         """
-        with open(self.file,"rb") as f:
-            fortran.skip(f) # Skip the header read by super()
+        with open(self.filename,"rb") as f:
+            skip_record(f) # Skip the header read by super()
             for _ in range(2*i+2):
-                fortran.skip(f)     # Previous Detector Header & Data
-            data = fortran.read(f)  # Current Detector Data
+                skip_record(f)     # Previous Detector Header & Data
+            data = read_record(f)  # Current Detector Data
 
         return data
 
@@ -363,28 +364,28 @@ def main():
 
     b = USYSUW()
     b.setVerbose(args.verbose)
-    b.readHeader(args.usryield) # data file closed here
+    b.read_header(args.usryield) # data file closed here
 
     ND = len(b.detector)
 
     if args.verbose:
-        b.sayHeader()
+        b.describe_header()
         logger.info("%s %d %s found:" % ('*'*20, ND, "estimator" if ND==1 else "estimators"))
         for i in range(ND):
-            b.say(i)
+            b.describe_detector(i)
             print("")
 
     fout = ROOT.TFile(rootFileName, "recreate")
     for i in range(ND):
         det = b.detector[i]
-        val = Data.unpackArray(b.readData(i,det.LLNUYL))
+        val = unpack_floats(b.read_detector_data(i,det.LLNUYL))
         logger.debug(f"{val=}")
-        err = Data.unpackArray(b.readStat(i,det.LLNUYL))
+        err = unpack_floats(b.read_statistics(i,det.LLNUYL))
         logger.debug(f"{err=}")
 
         assert len(val) == len(err), "val and err length are different: %d %d" % (len(val), len(err))
 
-        h = b.hist(det)
+        h = b.make_histogram(det)
 
         if h:
             n = h.GetNbinsX()

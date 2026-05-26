@@ -4,7 +4,7 @@ import sys, argparse, struct
 from os import path
 import numpy as np
 from mctools import fluka
-from mctools.fluka.flair import Data
+from mctools.fluka.flukaio.readers import ResidualNucleiFile, unpack_floats
 import ROOT
 ROOT.PyConfig.IgnoreCommandLineOptions = True
 
@@ -99,32 +99,32 @@ def main():
     else:
         rootFileName = args.root
 
-    b = Data.Resnuclei()
-    b.readHeader(args.usrsuw) # data file is closed here
+    b = ResidualNucleiFile()
+    b.read_header(args.usrsuw) # data file is closed here
 
-    ND = len(b.detector)
+    ND = len(b.detectors)
 
     if args.verbose:
-        b.sayHeader()
+        b.describe_header()
         print("\n%s %d %s found:" % ('*'*20, ND, "estimator" if ND==1 else "estimators"))
         for i in range(ND):
-            b.say(i)
+            b.describe_detector(i)
             print("")
 
     fout = ROOT.TFile(rootFileName, "recreate")
     for i in range(ND):
-        val = Data.unpackArray(b.readData(i))
-        stat = b.readStat(i)
-        total, A, errA, Z, errZ, err, isoErr = map(Data.unpackArray, stat)
+        val = unpack_floats(b.read_detector_data(i))
+        stat = b.read_statistics(i)
+        total, A, errA, Z, errZ, err, isoErr = map(unpack_floats, stat)
         # isoErr = errors for the isomer data
 
-#        print("isomers: ", b.nisomers, i)
+#        print("isomers: ", b.isomer_count, i)
 
-        det = b.detector[i]
+        det = b.detectors[i]
 #        print(det.nb, det.name, det.type, det.region, det.mhigh, det.zhigh, det.nmzmin)
 
-        if b.nisomers:
-            iso = b.readIso(i)
+        if b.isomer_count:
+            iso = b.read_isomers(i)
             isoHead = iso[0]
             L = struct.unpack("=10xi", isoHead)
             assert L[0] == len(isoErr), "Isomers: different size of Data and Error arrays"
@@ -155,7 +155,7 @@ def main():
                     h.SetBinError(z,a,err[gbin]*val[gbin])
 
         h.Write()
-        if b.nisomers:
+        if b.isomer_count:
             hIso.Write()
         grA.Write()
         grZ.Write()

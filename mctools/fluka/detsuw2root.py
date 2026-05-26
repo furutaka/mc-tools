@@ -4,7 +4,7 @@ import sys, argparse, struct
 import numpy as np
 from os import path
 from math import sqrt
-from mctools.fluka.flair import fortran
+from mctools.fluka.flukaio.recordio import read_record
 import ROOT
 ROOT.PyConfig.IgnoreCommandLineOptions = True
 
@@ -12,7 +12,7 @@ class DETECT:
     def __init__(self, fname):
         self.f = open(fname, 'rb')
 
-        data = fortran.read(self.f)
+        data = read_record(self.f)
         size = len(data)
         self.runtit, self.runtim, self.wctot, self.nctot, self.mctot = struct.unpack("=80s32sf2i", data)
         self.runtit = self.runtit.decode('utf-8').strip()
@@ -34,14 +34,14 @@ class DETECT:
     def read(self):
         self.reset()
 
-        data = fortran.read(self.f)
+        data = read_record(self.f)
         if data is None:
             return False
         size = len(data)
         ndet,self.chname,self.nbin,emin,ebin,self.ecut = struct.unpack("=i10si3f", data)
         self.chname = self.chname.decode('utf-8').strip()
 
-        data = fortran.read(self.f)
+        data = read_record(self.f)
         size = len(data)
         iv = struct.unpack("=%ii" % self.nbin, data)
 
