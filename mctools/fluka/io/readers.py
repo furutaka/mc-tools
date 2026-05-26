@@ -1,16 +1,4 @@
-"""Readers for FLUKA binary output files.
-
-This module contains the small set of binary parsers that the mc-tools
-FLUKA converters need:
-
-* a shared base class for USRxxx-style files
-* readers for USRBIN, USRBDX and RESNUCLEi output
-* helpers for MGDRAW-style event records and text tab.lis files
-
-The code keeps the same file format assumptions as the historical
-implementation, but the public names are intentionally clearer and more
-explicit.
-"""
+"""Readers for FLUKA binary output files."""
 
 from __future__ import annotations
 
@@ -19,7 +7,6 @@ import math
 import re
 import struct
 from dataclasses import dataclass
-from typing import BinaryIO, Iterable
 
 from . import bmath
 from .log import say
@@ -29,7 +16,6 @@ try:
     import numpy
 except ImportError:  # pragma: no cover - optional dependency
     numpy = None
-
 
 _DETECTOR_LINE = re.compile(r"^ ?# ?Detector ?n?:\s*\d*\s*(.*)\s*", re.MULTILINE)
 _BLOCK_LINE = re.compile(r"^ ?# ?Block ?n?:\s*\d*\s*(.*)\s*", re.MULTILINE)
@@ -58,8 +44,6 @@ class FlukaBinaryFile:
             self.read_header(filename)
 
     def reset(self) -> None:
-        """Reset all file-level metadata."""
-
         self.filename = ""
         self.title = ""
         self.time = ""
@@ -70,9 +54,7 @@ class FlukaBinaryFile:
         self.data_offset = -1
         self.stats_offset = -1
 
-    def read_header(self, filename: str) -> BinaryIO:
-        """Open *filename* and read the common USRxxx header."""
-
+    def read_header(self, filename: str):
         self.reset()
         self.filename = filename
         handle = open(self.filename, "rb")
@@ -94,7 +76,7 @@ class FlukaBinaryFile:
             title, time, self.weight, self.n_cases, self.n_batches = struct.unpack("=80s32sfii", payload)
         elif size == 128:
             title, time, self.weight, self.n_cases, overflow, self.n_batches = struct.unpack("=80s32sfiii", payload)
-        elif size == 136:  # FLUKA 2021.2: LISFVR and LMSFVR variables added
+        elif size == 136:
             title, time, self.weight, self.n_cases, overflow, self.n_batches, _, _ = struct.unpack(
                 "=80s32sfiiiii", payload
             )
@@ -109,20 +91,16 @@ class FlukaBinaryFile:
         return handle
 
     def read_detector_data(self, index: int) -> bytes:
-        """Read the payload of detector *index*."""
-
         handle = open(self.filename, "rb")
-        skip_record(handle)  # header
+        skip_record(handle)
         for _ in range(2 * index):
-            skip_record(handle)  # detector header + detector data
-        skip_record(handle)  # detector header
+            skip_record(handle)
+        skip_record(handle)
         payload = read_record(handle)
         handle.close()
         return payload
 
     def read_statistics(self, index: int) -> bytes | None:
-        """Read the statistical block for detector *index* if available."""
-
         if self.stats_offset < 0:
             return None
         handle = open(self.filename, "rb")
@@ -134,8 +112,6 @@ class FlukaBinaryFile:
         return payload
 
     def describe_header(self) -> None:
-        """Print the common file metadata."""
-
         say("File   : ", self.filename)
         say("Title  : ", self.title)
         say("Time   : ", self.time)
@@ -147,7 +123,7 @@ class FlukaBinaryFile:
 class ResidualNucleiFile(FlukaBinaryFile):
     """Reader for RESNUCLEi output files."""
 
-    def read_header(self, filename: str) -> BinaryIO:
+    def read_header(self, filename: str):
         handle = super().read_header(filename)
         self.isomer_count = 0
 
@@ -230,9 +206,7 @@ class ResidualNucleiFile(FlukaBinaryFile):
         handle.close()
         return payload
 
-    def read_isomers(self, index: int) -> tuple[bytes, bytes] | None:
-        """Return the isomer header and payload for detector *index*."""
-
+    def read_isomers(self, index: int):
         if self.isomer_count < 0:
             return None
 
@@ -259,9 +233,7 @@ class ResidualNucleiFile(FlukaBinaryFile):
         handle.close()
         return iso_header, iso_payload
 
-    def read_statistics(self, index: int) -> tuple[bytes, bytes, bytes, bytes, bytes, bytes, bytes | None] | None:
-        """Read the RESNUCLEi statistics block for detector *index*."""
-
+    def read_statistics(self, index: int):
         if self.stats_offset < 0:
             return None
 
@@ -302,7 +274,7 @@ class ResidualNucleiFile(FlukaBinaryFile):
 class UsrbdxFile(FlukaBinaryFile):
     """Reader for USRBDX boundary crossing files."""
 
-    def read_header(self, filename: str) -> BinaryIO:
+    def read_header(self, filename: str):
         handle = super().read_header(filename)
 
         for _ in range(1000):
@@ -374,7 +346,7 @@ class UsrbdxFile(FlukaBinaryFile):
         handle.close()
         return payload
 
-    def read_statistics(self, index: int) -> bytes | None:
+    def read_statistics(self, index: int):
         if self.stats_offset < 0:
             return None
         handle = open(self.filename, "rb")
@@ -413,7 +385,7 @@ class UsrbdxFile(FlukaBinaryFile):
 class UsrbinFile(FlukaBinaryFile):
     """Reader for USRBIN volumetric scoring files."""
 
-    def read_header(self, filename: str) -> BinaryIO:
+    def read_header(self, filename: str):
         handle = super().read_header(filename)
 
         for _ in range(1000):
@@ -494,7 +466,7 @@ class UsrbinFile(FlukaBinaryFile):
         dims = [self.detectors[index].nx, self.detectors[index].ny, self.detectors[index].nz]
         return numpy.reshape(payload, dims, order="F")
 
-    def read_statistics(self, index: int) -> bytes | None:
+    def read_statistics(self, index: int):
         if self.stats_offset < 0:
             return None
         handle = open(self.filename, "rb")
@@ -533,11 +505,11 @@ class MgdrawFile:
 
     def reset(self) -> None:
         self.filename = ""
-        self.handle: BinaryIO | None = None
+        self.handle = None
         self.event_count = 0
         self.data = None
 
-    def open(self, filename: str) -> BinaryIO | None:
+    def open(self, filename: str):
         self.reset()
         self.filename = filename
         try:
@@ -618,12 +590,6 @@ class MgdrawFile:
 
 
 def tab_lis(filename: str, detector: int, block: int = -1):
-    """Read a ``_tab.lis`` file and return one detector block.
-
-    The function is kept for the scripts that still need to cross-check FLUKA
-    text output against the binary readers.
-    """
-
     with open(filename, "r") as handle:
         raw_data = handle.read()
 

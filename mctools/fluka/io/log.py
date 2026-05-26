@@ -8,14 +8,11 @@
 __author__ = "Vasilis Vlachoudis"
 __email__  = "Vasilis.Vlachoudis@cern.ch"
 
-#-------------------------------------------------------------------------------
-# FIXME convert to class with static members
-#-------------------------------------------------------------------------------
-_outunit = None		# log unit
-_repeat  = set()	# avoid repeated errors
-_buffer  = None		# buffered output
+_outunit = None
+_repeat  = set()
+_buffer  = None
 
-#-------------------------------------------------------------------------------
+
 def _output(txt, repeat=True):
 	global _outunit
 	if not repeat and txt in _repeat: return
@@ -26,7 +23,7 @@ def _output(txt, repeat=True):
 			_buffer.append(txt)
 		print(txt)
 
-#-------------------------------------------------------------------------------
+
 def say(*args):
 	"""say/print a message"""
 	_output(" ".join(map(str,args)))

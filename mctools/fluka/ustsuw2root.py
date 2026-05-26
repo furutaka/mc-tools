@@ -5,8 +5,8 @@ from os import path
 import numpy as np
 from math import isclose
 from mctools import fluka, getLogBins, getLinBins
-from mctools.fluka.flukaio.readers import FlukaBinaryFile, DetectorRecord, unpack_floats
-from mctools.fluka.flukaio.recordio import read_record, skip_record
+from mctools.fluka.io.readers import FlukaBinaryFile, DetectorRecord, unpack_floats
+from mctools.fluka.io.recordio import read_record, skip_record
 import ROOT
 ROOT.PyConfig.IgnoreCommandLineOptions = True
 

@@ -4,7 +4,7 @@ import sys, argparse
 from os import path
 import numpy as np
 from mctools import fluka, getLogBins, getLinBins
-from mctools.fluka.flukaio.readers import UsrbdxFile, unpack_floats
+from mctools.fluka.io.readers import UsrbdxFile, unpack_floats
 import ROOT
 ROOT.PyConfig.IgnoreCommandLineOptions = True
 

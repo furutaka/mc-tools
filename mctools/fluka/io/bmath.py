@@ -4,13 +4,7 @@ from __future__ import annotations
 
 
 def format(number, length=16, useExp=False):
-    """Return a compact string representation of *number*.
-
-    The legacy FLUKA reader only uses this helper to avoid tiny floating-point
-    artifacts in USRBIN bin edges.  The implementation keeps the old behavior
-    close enough for that use case without pulling in the historical utility
-    module.
-    """
+    """Return a compact string representation of *number*."""
 
     if isinstance(number, (float, int)):
         if number == 0:

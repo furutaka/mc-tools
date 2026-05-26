@@ -4,7 +4,7 @@ import sys, argparse, struct
 import numpy as np
 from os import path
 from math import sqrt
-from mctools.fluka.flukaio.recordio import read_record
+from mctools.fluka.io.recordio import read_record
 import ROOT
 ROOT.PyConfig.IgnoreCommandLineOptions = True
 

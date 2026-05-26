@@ -4,7 +4,7 @@ import sys, argparse
 from os import path
 import numpy as np
 from mctools import fluka
-from mctools.fluka.flukaio.readers import UsrbinFile, unpack_floats
+from mctools.fluka.io.readers import UsrbinFile, unpack_floats
 
 def getEdges(xmin, xmax, nbins):
     """Return bin edges given the axis min, max and number of equidistant bins

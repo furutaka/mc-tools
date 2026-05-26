@@ -4,7 +4,7 @@ import sys, argparse, struct
 from os import path
 import numpy as np
 from mctools import fluka
-from mctools.fluka.flukaio.readers import ResidualNucleiFile, unpack_floats
+from mctools.fluka.io.readers import ResidualNucleiFile, unpack_floats
 import ROOT
 ROOT.PyConfig.IgnoreCommandLineOptions = True
 

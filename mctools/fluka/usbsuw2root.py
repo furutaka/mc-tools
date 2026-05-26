@@ -3,7 +3,7 @@
 import sys, argparse
 from os import path
 from mctools import fluka
-from mctools.fluka.flukaio.readers import UsrbinFile, unpack_floats
+from mctools.fluka.io.readers import UsrbinFile, unpack_floats
 import ROOT
 ROOT.PyConfig.IgnoreCommandLineOptions = True
 

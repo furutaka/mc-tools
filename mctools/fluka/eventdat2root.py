@@ -2,7 +2,7 @@
 
 import sys, argparse, os, struct
 from array import array
-from mctools.fluka.flukaio.recordio import read_record
+from mctools.fluka.io.recordio import read_record
 import ROOT
 ROOT.PyConfig.IgnoreCommandLineOptions = True
 
