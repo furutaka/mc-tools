@@ -74,7 +74,8 @@ jobs:
       #   languages: cpp
       run: |
        export LD_LIBRARY_PATH=$ROOTSYS/lib:$LD_LIBRARY_PATH
-       sudo apt-get install libboost-program-options-dev
+       sudo apt-get update
+       sudo apt-get install -y libboost-program-options-dev build-essential
        pwd
        export MCTOOLS=$(pwd)
        export PATH=$MCTOOLS/bin:$PATH
