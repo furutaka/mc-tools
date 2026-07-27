@@ -271,6 +271,7 @@ class Angel:
         ##################################################
         for npage in range(1, len(pageLST)):
             if DEBUG: print("========== Page {} ==========".format(npage))
+            hasGSHOW = False
             # first scan: extract header info in advance to the data extraction
             if DEBUG: print("---------- 1st scan ----------")
             hLST = [] # list of 'H-tuples', (Line#OfH,"typeOfH"). ("typeOfH" is redundant)
@@ -294,9 +295,12 @@ class Angel:
                 elif re.search("'no. =", line): # subtitles of 2D histogram
                     self.subtitles.append(' '.join(line[line.find(',')+1:].split()).replace("\'", '').strip())
                     if DEBUG: print("subtitle:", self.subtitles)
-                elif re.search("^h", line):
+                elif re.search("^h", line) and not hasGSHOW:
                     if DEBUG: print("h-line found: '{}'".format(line))
                     hLST.append( (iline,line.split()[0]) ) # H-tuple
+                elif re.search("^# gshow", line):
+                    if DEBUG: print("'# gshow' found, 2-D data!")
+                    hasGSHOW = True
             if DEBUG: print("hLST: ", hLST)
 
             # second scan: extract data.
@@ -312,7 +316,7 @@ class Angel:
                 #: the location of "^[\s#]newpage:$" and therefore '+1'
                 igline = iline + pageSepLineLST[npage-1] + 1
                 if re.search("^h", line):
-                    if re.search("^h: [nx]", line): # !!! We are looking for 'h: n' instead of 'h' due to rz-plots.
+                    if re.search("^h: [nx]", line) and not hasGSHOW: # !!! We are looking for 'h: n' instead of 'h' due to rz-plots.
                         if DEBUG: print("one dimentional graph section")
                         self.Read1DHist(igline, npage)
                         continue
